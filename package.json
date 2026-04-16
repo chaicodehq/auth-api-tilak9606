@@ -7,8 +7,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest --runInBand",
-    "test:win": "set NODE_OPTIONS=--experimental-vm-modules&& jest --runInBand"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+"test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "keywords": [
     "authentication",

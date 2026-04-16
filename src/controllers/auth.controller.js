@@ -13,12 +13,26 @@ import { signToken } from '../utils/jwt.js';
  */
 export async function register(req, res, next) {
   try {
-    // Your code here
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: { message: "Name, email and password are required" } });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ error: { message: "Email already exists" } });
+    }
+    
+    const user = new User({ name, email, password });
+    await user.save();
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    res.status(201).json({ user: userResponse });
   } catch (error) {
     next(error);
   }
 }
-
 /**
  * TODO: Login user
  *
@@ -32,7 +46,33 @@ export async function register(req, res, next) {
  */
 export async function login(req, res, next) {
   try {
-    // Your code here
+    const { email, password } = req.body;
+    
+    // Add validation
+    if (!email || !password) {
+      return res.status(400).json({ error: { message: "Email and password are required" } });
+    }
+
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
+      return res.status(401).json({ error: { message: "Invalid credentials" } });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: { message: "Invalid credentials" } });
+    }
+
+    const token = signToken({ 
+      userId: user._id, 
+      email: user.email, 
+      role: user.role 
+    });
+
+    const userData = user.toObject();
+    delete userData.password;
+    
+    res.status(200).json({ token, user: userData });
   } catch (error) {
     next(error);
   }
@@ -46,7 +86,15 @@ export async function login(req, res, next) {
  */
 export async function me(req, res, next) {
   try {
-    // Your code here
+    // Safer approach - fetch fresh data without sensitive fields
+    // or ensure req.user doesn't have password
+    const user = await User.findById(req.user._id).select('-password -__v');
+    
+    if (!user) {
+      return res.status(404).json({ error: { message: "User not found" } });
+    }
+    
+    res.status(200).json({ user });
   } catch (error) {
     next(error);
   }

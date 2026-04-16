@@ -12,6 +12,8 @@ import { authenticate } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-// Your routes here
+router.post('/register', register);
+router.post('/login', login);
+router.get('/me', authenticate, me);
 
 export default router;
